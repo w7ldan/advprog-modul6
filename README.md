@@ -34,3 +34,12 @@ Refleksi 3
    Oleh karena itu, dijalankan iterasi *refactoring*. *Refactoring* dicapai di mana perbedaan variabel tersebut difokuskan dan diubah jadi tipe Tuple `(status_line, filename)`. Nilai evaluasi blok `if` dipakai sepenuhnya untuk mengisi konfigurasi Tuple ini. Lalu, logika utama untuk membaca isi HTML dan menulis *response* akhirnya berhasil diekstraksi ke luar blok pemisah `if-else` menjadi kode mandiri yang hanya ditulis satu kali. Hal ini merupakan perwujudan asas pengembangan dari paham DRY (Don't Repeat Yourself), menjadikan kualitas kode jauh lebih bersih meramping, tangguh dan terpusat (*maintainable*).
 
    ![Commit 3 screen capture](/assets/images/commit3.png)
+
+Refleksi 4
+
+1. **Simulasi Respons Lambat (*Slow Response Simulation*):**
+   Pada simulasi ini, saya mengintegrasikan modul `thread` dan `Duration` yang merupakan fitur *core library* bawaan bahasa Rust. Tujuannya adalah untuk meniru *endpoint* lambat yang memakan banyak waktu pemrosesan (*blocking processing*). Saya membuat simulasi melalui *endpoint* `/sleep` yang di dalamnya terpasang kode `thread::sleep(Duration::from_secs(10))`. Jika rute ini dikunjungi, eksekusi alur aplikasi di *thread* utama akan diinterupsi dan ditahan paksa selama 10 detik penuh sebelum akhirnya *server* membalas pengembalian `"hello.html"`.
+
+2. **Problem Arsitektur *Single-Threaded*:**
+   Efek yang langsung terasa akibat *endpoint* `/sleep` ini rupanya berdampak sangat masif pada visibilitas proyek! Karena *server* kita masih berjalan pada arus tunggal (*single-threaded*), segala komputasi *request* membonceng antrean komputasi secara linier. Saat browser *(tab spesifik)* memuat rute simulasi `/sleep`, selurh arsitektur *server* seketika divonis "tersandera" (*blocked*/*stuck*). Berapa pun jumlah jendela atau rute tab normal lain yang memuat halaman `/` secara bersamaan, mereka semua terpaksa menggantung terus (*loading state*) hingga 10 detiknya ditutup.
+   Inilah kelemahan dan cacat absolut sistem web *single-thread*. Di level iterasi dan sistem sesungguhnya (*production*), metode konvensional ini sungguh rentan, *bottle-neck* yang parah pada *throughput*, dan *non-scalable* bila dieksploitasi untuk pengaksesan data secara serentak (*concurrent execution*).
