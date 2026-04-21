@@ -15,8 +15,6 @@ Refleksi 1
    
    Pada baris terakhir, program menggunakan `println!` untuk mem-print `http_request` ke layar terminal console. Hasil tampilannya mempermudah kita saat melakukan inspeksi metadaata *request* dari sisi browser klien.
 
----
-
 Refleksi 2
 
 1. **Pengembalian HTML dan Peran `Content-Length`:**
@@ -25,3 +23,14 @@ Refleksi 2
    Lalu ditambahkan *header* `Content-Length`. Atribut ini berperan wajib dalam protokol transmisi untuk memberi tahu *client browser* mengenai ukuran aktual (dalam bytes via `contents.len()`) dari *response body* yang dikirimkan. Berkat *header* presisi ini, browser klien dapat menjamin kepastian bahwa keseluruhan data *response* sudah diterima dengan paripurna sebelum memutus aliran datanya.
    Langkah terakhir dijalankan dengan merangkai *status line*, *header* `Content-Length`, dan *body* ke dalam `format!()`, lalu ditransmisikan kembali lewat `stream.write_all()` dengan mengonversinya menjadi *byte array* mentah (`as_bytes()`).
    ![Commit 2 screen capture](/assets/images/commit2.png)
+
+Refleksi 3
+
+1. **Pemisahan Response dan Validasi Request:**
+   Pada pencapaian commit ini, saya mengembangkan sebuah logika *validation* yang sederhana untuk mengarahkan ke mana *request* harus diproses. Langkah utama diaplikasikan dengan memilah baris pertama dari HTTP request (`request_line`) sebagai acuan. Jika pengunjung mengarah ke root `/` lewat `"GET / HTTP/1.1"`, maka aplikasi akan mengalokasikannya dengan isi file `"hello.html"` dengan *status code* bernilai `"HTTP/1.1 200 OK"`. Sebaliknya, apabila ia mencari URL yang tidak valid (semisal ke `/bad`), muatannya secara adaptif akan mendarat di blok eksekusi `else`, dan direkomendasikan menuju file `"404.html"` dengan sisipan *status code* pengembalian `"HTTP/1.1 404 NOT FOUND"`.
+
+2. **Dampak Signifikan Refactoring pada Basis Kode:**
+   Sebelum refactoring ini dilakukan, desain mentah program memiliki duplikasi *boilerplate code* lantaran fungsionalitas `fs::read_to_string`, mekanisme ukurannya (`.len()`), *macro* `format!()`, serta metode pengiriman datanya (`stream.write_all()`) terpaksa ditulis berulang di dalam blok `if` maupun `else`. Ini sangat tidak efisien dan melanggar praktik arsitektur program yang baik.
+   Oleh karena itu, dijalankan iterasi *refactoring*. *Refactoring* dicapai di mana perbedaan variabel tersebut difokuskan dan diubah jadi tipe Tuple `(status_line, filename)`. Nilai evaluasi blok `if` dipakai sepenuhnya untuk mengisi konfigurasi Tuple ini. Lalu, logika utama untuk membaca isi HTML dan menulis *response* akhirnya berhasil diekstraksi ke luar blok pemisah `if-else` menjadi kode mandiri yang hanya ditulis satu kali. Hal ini merupakan perwujudan asas pengembangan dari paham DRY (Don't Repeat Yourself), menjadikan kualitas kode jauh lebih bersih meramping, tangguh dan terpusat (*maintainable*).
+
+   ![Commit 3 screen capture](/assets/images/commit3.png)
