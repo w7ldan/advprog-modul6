@@ -14,3 +14,14 @@ Refleksi 1
    - Pada akhirnya, `.collect()` bertugas untuk mengonsumsi keseluruhan elemen di dalam *iterator* hingga batas `.take_while` tadi tercapai, dan menyimpannya ke tipe `Vec<_>`.
    
    Pada baris terakhir, program menggunakan `println!` untuk mem-print `http_request` ke layar terminal console. Hasil tampilannya mempermudah kita saat melakukan inspeksi metadaata *request* dari sisi browser klien.
+
+---
+
+Refleksi 2
+
+1. **Pengembalian HTML dan Peran `Content-Length`:**
+   Pada commit ini, saya melakukan modifikasi pada method `handle_connection` agar server mampu merespons dengan me-return file HTML sederhana (`hello.html`) ke browser pengguna.
+   Pertama, fungsionalitas membaca file diatur melalui `fs::read_to_string` yang mengubah HTML mentah menjadi tipe data `String`. 
+   Lalu ditambahkan *header* `Content-Length`. Atribut ini berperan wajib dalam protokol transmisi untuk memberi tahu *client browser* mengenai ukuran aktual (dalam bytes via `contents.len()`) dari *response body* yang dikirimkan. Berkat *header* presisi ini, browser klien dapat menjamin kepastian bahwa keseluruhan data *response* sudah diterima dengan paripurna sebelum memutus aliran datanya.
+   Langkah terakhir dijalankan dengan merangkai *status line*, *header* `Content-Length`, dan *body* ke dalam `format!()`, lalu ditransmisikan kembali lewat `stream.write_all()` dengan mengonversinya menjadi *byte array* mentah (`as_bytes()`).
+   ![Commit 2 screen capture](/assets/images/commit2.png)
